@@ -2,16 +2,13 @@ name: Actualizar calendario Marianistas
 
 on:
   schedule:
-    # Lunes y jueves a las 06:15 UTC.
-    # OJO: cron en Actions es SIEMPRE UTC, no cambia con el horario de verano.
-    # En invierno son las 07:15 en España; en verano, las 08:15.
+    # Lunes y jueves a las 06:15 UTC (el cron de Actions es siempre UTC).
     - cron: "15 6 * * 1,4"
-  workflow_dispatch:        # permite lanzarlo a mano desde la pestaña Actions
+  workflow_dispatch:
   push:
     paths:
-      - "rfaf_calendario.py"   # si tocas el scraper, regenera al vuelo
+      - "rfaf_calendario.py"
 
-# Sin esto el bot no puede commitear: el token es de solo lectura por defecto.
 permissions:
   contents: write
 
@@ -24,9 +21,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # v5 / v6 ya corren sobre Node 24: eliminan el aviso de deprecacion.
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -41,9 +39,6 @@ jobs:
 
       - name: Verificar que el resultado tiene sentido
         run: |
-          # Si la RFAF cambia el HTML, el scraper podría devolver 0 partidos
-          # sin fallar. Mejor romper aquí que publicar un calendario vacío
-          # y borrar en silencio los eventos que ya tenías en el móvil.
           n=$(grep -c "BEGIN:VEVENT" docs/marianistas.ics || true)
           echo "Eventos encontrados: $n"
           if [ "$n" -lt 25 ]; then
@@ -56,14 +51,18 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # DTSTAMP cambia en cada ejecución, así que el fichero SIEMPRE
-          # difiere aunque los partidos sean idénticos. Comparamos ignorando
-          # esa línea para no generar un commit inútil cada lunes.
-          if git diff --quiet -I '^DTSTAMP:' -- docs/; then
+          # IMPORTANTE: 'git add' ANTES de comparar.
+          # 'git diff' a secas ignora los ficheros no rastreados, asi que en la
+          # primera ejecucion no veia docs/ (recien creado), concluia "sin
+          # cambios" y terminaba en verde sin publicar nada.
+          git add docs/
+
+          # Comparamos contra el indice ignorando DTSTAMP, que cambia en cada
+          # ejecucion y provocaria un commit inutil cada lunes.
+          if git diff --cached --quiet -I '^DTSTAMP:'; then
             echo "Sin cambios reales en el calendario."
             exit 0
           fi
 
-          git add docs/
           git commit -m "Calendario actualizado: $(date -u +%Y-%m-%d)"
           git push
