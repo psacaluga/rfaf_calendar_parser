@@ -2,7 +2,6 @@ name: Actualizar calendario Marianistas
 
 on:
   schedule:
-    # Lunes y jueves a las 06:15 UTC (el cron de Actions es siempre UTC).
     - cron: "15 6 * * 1,4"
   workflow_dispatch:
   push:
@@ -21,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # v5 / v6 ya corren sobre Node 24: eliminan el aviso de deprecacion.
       - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v6
@@ -51,18 +49,33 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # IMPORTANTE: 'git add' ANTES de comparar.
-          # 'git diff' a secas ignora los ficheros no rastreados, asi que en la
-          # primera ejecucion no veia docs/ (recien creado), concluia "sin
-          # cambios" y terminaba en verde sin publicar nada.
-          git add docs/
+          # Avisamos si algo esta ignorando docs/ (plantillas de .gitignore
+          # como la de Python o Jekyll suelen incluir reglas sobre 'docs').
+          if git check-ignore -v docs/marianistas.ics; then
+            echo "::warning::docs/ esta en .gitignore (linea de arriba). Forzando."
+          fi
 
-          # Comparamos contra el indice ignorando DTSTAMP, que cambia en cada
-          # ejecucion y provocaria un commit inutil cada lunes.
+          # -f para saltarse .gitignore. Sin esto 'git add' no anade nada,
+          # el diff no ve cambios y el workflow termina en verde sin publicar.
+          git add -f docs/
+
+          echo "--- estado tras el add ---"
+          git status --short
+
+          # Red de seguridad: si no hay NADA en el indice, algo va mal.
+          # Preferimos fallar visiblemente a terminar en verde sin publicar.
+          if git diff --cached --quiet && [ -z "$(git ls-files docs/)" ]; then
+            echo "::error::No se ha podido anadir docs/ al indice."
+            exit 1
+          fi
+
+          # Ignoramos DTSTAMP, que cambia en cada ejecucion y generaria
+          # un commit inutil cada vez aunque los partidos sean identicos.
           if git diff --cached --quiet -I '^DTSTAMP:'; then
-            echo "Sin cambios reales en el calendario."
+            echo "Sin cambios reales en el calendario (ya estaba publicado)."
             exit 0
           fi
 
           git commit -m "Calendario actualizado: $(date -u +%Y-%m-%d)"
           git push
+          echo "Publicado en docs/marianistas.ics"
