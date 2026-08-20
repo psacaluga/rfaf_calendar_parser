@@ -90,10 +90,10 @@
   {
     "jornada": 9,
     "fecha": "2026-11-15",
-    "local": "C.D. ESCUELA BAHIA SAN FERNANDO",
+    "local": "BAHIA SAN FERNANDO C.D.",
     "visitante": "A.D. MARIANISTAS C.D.",
     "en_casa": false,
-    "rival": "C.D. ESCUELA BAHIA SAN FERNANDO",
+    "rival": "BAHIA SAN FERNANDO C.D.",
     "campo": "San Fernando - BAZAN CAMPO MUNICIPAL (F11-F7)",
     "turno": "A",
     "hora_confirmada": false
@@ -256,9 +256,9 @@
     "jornada": 24,
     "fecha": "2027-04-11",
     "local": "A.D. MARIANISTAS C.D.",
-    "visitante": "C.D. ESCUELA BAHIA SAN FERNANDO",
+    "visitante": "BAHIA SAN FERNANDO C.D.",
     "en_casa": true,
-    "rival": "C.D. ESCUELA BAHIA SAN FERNANDO",
+    "rival": "BAHIA SAN FERNANDO C.D.",
     "campo": "Jerez De La Frontera - SANTA FE",
     "turno": "A",
     "hora_confirmada": false
