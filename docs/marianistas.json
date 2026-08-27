@@ -39,8 +39,8 @@
     "visitante": "REAL BALOMPEDICA LINENSE",
     "en_casa": true,
     "rival": "REAL BALOMPEDICA LINENSE",
-    "campo": "Jerez De La Frontera - SANTA FE",
-    "turno": "A",
+    "campo": "",
+    "turno": null,
     "hora_confirmada": false
   },
   {
@@ -204,8 +204,8 @@
     "visitante": "A.D. MARIANISTAS C.D.",
     "en_casa": false,
     "rival": "REAL BALOMPEDICA LINENSE",
-    "campo": "La Línea de La Concepción - Francisco Pozo",
-    "turno": "A",
+    "campo": "",
+    "turno": null,
     "hora_confirmada": false
   },
   {
