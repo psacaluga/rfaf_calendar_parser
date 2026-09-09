@@ -33,12 +33,11 @@ jobs:
         run: |
           python rfaf_calendario.py
           salida="xerez-deportivo-b-$(date -u +%Y-%m-%d)"
-          cp "docs/$salida/xerez-deportivo-b.ics" "docs/xerez-deportivo-b.ics"
-          cp "docs/$salida/xerez-deportivo-b.json" "docs/xerez-deportivo-b.json"
 
       - name: Verificar que el resultado tiene sentido
         run: |
-          n=$(grep -c "BEGIN:VEVENT" docs/xerez-deportivo-b.ics || true)
+          salida="docs/xerez-deportivo-b-$(date -u +%Y-%m-%d)"
+          n=$(grep -c "BEGIN:VEVENT" "$salida/xerez-deportivo-b.ics" || true)
           echo "Eventos encontrados: $n"
           if [ "$n" -lt 25 ]; then
             echo "::error::Solo $n eventos (esperados ~30). Aborto sin publicar."
@@ -52,7 +51,7 @@ jobs:
 
           # Avisamos si algo esta ignorando docs/ (plantillas de .gitignore
           # como la de Python o Jekyll suelen incluir reglas sobre 'docs').
-          if git check-ignore -v docs/xerez-deportivo-b.ics; then
+          if git check-ignore -v "$salida/xerez-deportivo-b.ics"; then
             echo "::warning::docs/ esta en .gitignore (linea de arriba). Forzando."
           fi
 
@@ -79,4 +78,4 @@ jobs:
 
           git commit -m "Calendario actualizado: $(date -u +%Y-%m-%d)"
           git push
-          echo "Publicado en docs/xerez-deportivo-b.ics"
+          echo "Publicado en docs/$salida/xerez-deportivo-b.ics"

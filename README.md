@@ -23,7 +23,7 @@ Archivo `.ics` descargable con los eventos de RFAF (Cádiz), extraído del PNFG 
 Una vez ejecutado el workflow, descarga el archivo:
 
 ```
-https://github.com/USUARIO/REPO/raw/refs/heads/main/docs/xerez-deportivo-b.ics
+https://github.com/USUARIO/REPO/raw/refs/heads/main/docs/xerez-deportivo-b-AAAA-MM-DD/xerez-deportivo-b.ics
 ```
 
 - **Google Calendar**: abre `calendar.google.com` → Configuración → Importar y exportar → Importar. Selecciona el archivo `.ics` y el calendario de destino.
@@ -43,7 +43,7 @@ Si activas Pages sobre la carpeta `/docs`, tendrás una URL más limpia para des
 el archivo:
 
 ```
-https://USUARIO.github.io/REPO/xerez-deportivo-b.ics
+https://USUARIO.github.io/REPO/xerez-deportivo-b-AAAA-MM-DD/xerez-deportivo-b.ics
 ```
 
 ## Avisos importantes
