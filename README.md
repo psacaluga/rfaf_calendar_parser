@@ -1,11 +1,11 @@
 # Calendario XEREZ DEPORTIVO F.C. FUNDACION "B"
 
-Feed `.ics` autoactualizado del calendario de 2ª Andaluza Juvenil (Cádiz),
-extraído del PNFG de la RFAF.
+Archivo `.ics` descargable con los eventos de la 2ª Andaluza Juvenil (Cádiz),
+extraído del PNFG de la RFAF para importarlo en un calendario personal.
 
 ## Puesta en marcha
 
-1. Crea un repo **público** (los privados no permiten servir el fichero por raw sin token, y complica la suscripción desde el móvil).
+1. Crea un repo **público** para poder descargar el fichero `.ics` sin autenticación.
 
 2. Estructura:
 
@@ -19,23 +19,29 @@ extraído del PNFG de la RFAF.
 
 4. Pestaña **Actions → Actualizar calendario → Run workflow** para la primera ejecución. No esperes al cron.
 
-## Suscribirte
+## Importar eventos
 
-Una vez exista `docs/xerez-deportivo-b.ics`, la URL es:
+Una vez ejecutado el workflow, descarga el archivo:
 
 ```
-https://raw.githubusercontent.com/USUARIO/REPO/main/docs/xerez-deportivo-b.ics
+https://github.com/USUARIO/REPO/raw/refs/heads/main/docs/xerez-deportivo-b.ics
 ```
 
-- **iPhone**: Ajustes → Apps → Calendario → Cuentas → Añadir cuenta → Otra → Añadir calendario suscrito. Pega la URL. Permite fijar el intervalo de actualización.
-- **Android / Google Calendar**: hay que darla de alta desde el navegador en escritorio (calendar.google.com → Otros calendarios → Desde URL). Google refresca cuando quiere, a veces con más de 24 h de retraso.
-- **Outlook**: Añadir calendario → Suscribirse desde Internet.
+- **Google Calendar**: abre `calendar.google.com` → Configuración → Importar y exportar → Importar. Selecciona el archivo `.ics` y el calendario de destino.
+- **Apple Calendar**: abre Calendario → Archivo → Importar y selecciona el archivo `.ics`.
+- **Outlook**: abre Calendario → Agregar calendario → Cargar desde archivo. Selecciona el archivo `.ics` y el calendario de destino.
 
-Es **solo lectura**: los eventos se actualizan solos y no puedes editarlos desde el móvil. Es lo que quieres — si editas, el siguiente refresco te lo pisa.
+La importación copia los eventos al calendario elegido. No crea una suscripción,
+por lo que los eventos se pueden editar después de importarlos.
 
-### Alternativa: GitHub Pages
+Cuando el workflow genere una nueva versión, tendrás que descargarla e importarla
+de nuevo. Para evitar duplicados, elimina antes los eventos importados anteriormente
+o impórtalos en un calendario separado.
 
-Si activas Pages sobre la carpeta `/docs`, tendrás una URL más limpia y con mejor caché:
+### Descarga desde GitHub Pages
+
+Si activas Pages sobre la carpeta `/docs`, tendrás una URL más limpia para descargar
+el archivo:
 
 ```
 https://USUARIO.github.io/REPO/xerez-deportivo-b.ics
