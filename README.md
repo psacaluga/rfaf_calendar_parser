@@ -1,7 +1,6 @@
 # Calendario XEREZ DEPORTIVO F.C. FUNDACION "B"
 
-Archivo `.ics` descargable con los eventos de la 2ª Andaluza Juvenil (Cádiz),
-extraído del PNFG de la RFAF para importarlo en un calendario personal.
+Archivo `.ics` descargable con los eventos de RFAF (Cádiz), extraído del PNFG de la RFAF para importarlo en un calendario personal.
 
 ## Puesta en marcha
 
@@ -72,8 +71,9 @@ python3 rfaf_calendario.py \
    --slug nombre-equipo
 ```
 
-Esto genera `nombre-equipo.ics` y `nombre-equipo.json`. El mismo comando puede
-usarse con un HTML descargado localmente, pasando el fichero como primer argumento.
+Esto genera dentro de `docs/` una carpeta `nombre-equipo-AAAA-MM-DD` con
+`nombre-equipo.ics` y `nombre-equipo.json`. El mismo comando puede usarse con un
+HTML descargado localmente, pasando el fichero como primer argumento.
 
 
 https://www.rfaf.es/pnfg/NPcd/NFG_VisCalendario_Vis?cod_primaria=1000120&codtemporada=22&codcompeticion=49505530&codgrupo=49603134

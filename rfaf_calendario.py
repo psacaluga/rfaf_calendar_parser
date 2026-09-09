@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Extrae el calendario de un equipo de la RFAF (PNFG)
-y genera un feed .ics suscribible + un JSON.
+y genera un archivo .ics importable + un JSON.
 
 Uso:
     python rfaf_calendario.py            # descarga de la web
@@ -34,7 +34,7 @@ SLUG_POR_DEFECTO = "xerez-deportivo-b"
 HORA_MANANA, HORA_TARDE, HORA_DESCONOCIDA = "11:00", "17:00", "12:00"
 DURACION_MIN = 105  # 90' + descanso
 
-OUT = Path(__file__).parent
+OUT = Path(__file__).parent / "docs"
 
 
 # --- Utilidades --------------------------------------------------------------
@@ -234,13 +234,17 @@ def main():
               "¿Ha cambiado el nombre o el HTML?", file=sys.stderr)
         return 1
 
-    (OUT / f"{args.slug}.ics").write_text(
+    carpeta_salida = OUT / f"{args.slug}-{datetime.now().strftime('%Y-%m-%d')}"
+    carpeta_salida.mkdir(parents=True, exist_ok=True)
+
+    (carpeta_salida / f"{args.slug}.ics").write_text(
         genera_ics(partidos, args.equipo, args.slug), encoding="utf-8")
-    (OUT / f"{args.slug}.json").write_text(
+    (carpeta_salida / f"{args.slug}.json").write_text(
         json.dumps(partidos, ensure_ascii=False, indent=2), encoding="utf-8")
 
     casa = sum(p["en_casa"] for p in partidos)
     print(f"✅ {len(partidos)} partidos ({casa} en casa, {len(partidos)-casa} fuera)")
+    print(f"📁 Salida: {carpeta_salida}")
     for p in partidos:
         marca = "🏠" if p["en_casa"] else "✈️"
         print(f"  J{p['jornada']:>2}  {p['fecha']}  {marca} vs {p['rival']:<34} "

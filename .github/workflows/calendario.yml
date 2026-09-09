@@ -32,8 +32,9 @@ jobs:
       - name: Ejecutar scraper
         run: |
           python rfaf_calendario.py
-          mkdir -p docs
-          mv xerez-deportivo-b.ics xerez-deportivo-b.json docs/
+          salida="xerez-deportivo-b-$(date -u +%Y-%m-%d)"
+          cp "docs/$salida/xerez-deportivo-b.ics" "docs/xerez-deportivo-b.ics"
+          cp "docs/$salida/xerez-deportivo-b.json" "docs/xerez-deportivo-b.json"
 
       - name: Verificar que el resultado tiene sentido
         run: |
