@@ -1,35 +1,34 @@
 #!/usr/bin/env python3
 """
-Extrae el calendario de A.D. MARIANISTAS C.D. de la RFAF (PNFG)
+Extrae el calendario de un equipo de la RFAF (PNFG)
 y genera un feed .ics suscribible + un JSON.
 
 Uso:
     python rfaf_calendario.py            # descarga de la web
     python rfaf_calendario.py fichero.html   # parsea un HTML local
+    python rfaf_calendario.py --url URL --equipo "Nombre" --slug nombre
 """
 
 import json
 import re
 import sys
 import unicodedata
+from argparse import ArgumentParser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 
 # --- Configuración -----------------------------------------------------------
 
-EQUIPO = "A.D. MARIANISTAS C.D."
-
-BASE = "https://www.rfaf.es/pnfg/NPcd/NFG_VisCalendario_Vis"
-PARAMS = {
-    "cod_primaria": "1000120",
-    "codgrupo": "48795840",
-    "codcompeticion": "48795719",
-    "codtemporada": "22",
-    "CodJornada": "1",
-    "CDetalle": "1",          # <-- versión extendida: incluye el campo
-}
+URL_POR_DEFECTO = (
+    "https://www.rfaf.es/pnfg/NPcd/NFG_VisCalendario_Vis?"
+    "cod_primaria=1000120&codtemporada=22&codcompeticion=49505530&"
+    "codgrupo=49603134"
+)
+EQUIPO_POR_DEFECTO = 'XEREZ DEPORTIVO F.C. FUNDACION "B"'
+SLUG_POR_DEFECTO = "xerez-deportivo-b"
 
 # Sin hora oficial todavía. (A) = mañana, (T) = tarde.
 HORA_MANANA, HORA_TARDE, HORA_DESCONOCIDA = "11:00", "17:00", "12:00"
@@ -53,17 +52,17 @@ def normaliza(texto: str) -> str:
     return t.strip().upper()
 
 
-CLAVE_EQUIPO = normaliza(EQUIPO)
-
-
 # --- Descarga ----------------------------------------------------------------
 
-def descargar() -> str:
+def descargar(url: str) -> str:
     import requests
 
+    consulta = dict(parse_qsl(urlparse(url).query))
+    consulta.update({"CodJornada": "1", "CDetalle": "1"})
+    partes = urlparse(url)
+    url_completa = urlunparse(partes._replace(query=urlencode(consulta)))
     r = requests.get(
-        BASE,
-        params=PARAMS,
+        url_completa,
         headers={"User-Agent": "CalendarioPersonal/1.0 (uso personal)"},
         timeout=30,
     )
@@ -79,10 +78,11 @@ RE_FECHA = re.compile(r"\((\d{2})-(\d{2})-(\d{4})\)")
 RE_TURNO = re.compile(r"\((A|T)\)\s*$")
 
 
-def parsea(html: str) -> list[dict]:
+def parsea(html: str, equipo: str) -> list[dict]:
     # html.parser tolera el <span> sin cerrar del <h5 class="card-title">
     soup = BeautifulSoup(html, "html.parser")
     partidos = []
+    clave_equipo = normaliza(equipo)
 
     for card in soup.select("div.card-body"):
         titulo = card.find("h5", class_="card-title")
@@ -105,7 +105,7 @@ def parsea(html: str) -> list[dict]:
             local = re.sub(r"\s+", " ", equipos[0].get_text().replace("\xa0", " ")).strip()
             visitante = re.sub(r"\s+", " ", equipos[1].get_text().replace("\xa0", " ")).strip()
 
-            if CLAVE_EQUIPO not in (normaliza(local), normaliza(visitante)):
+            if clave_equipo not in (normaliza(local), normaliza(visitante)):
                 continue
 
             detalle = fila.select_one("div.col-sm-5")
@@ -125,8 +125,8 @@ def parsea(html: str) -> list[dict]:
                 "fecha": f"{anio}-{mes}-{dia}",
                 "local": local,
                 "visitante": visitante,
-                "en_casa": normaliza(local) == CLAVE_EQUIPO,
-                "rival": visitante if normaliza(local) == CLAVE_EQUIPO else local,
+                "en_casa": normaliza(local) == clave_equipo,
+                "rival": visitante if normaliza(local) == clave_equipo else local,
                 "campo": campo,
                 "turno": turno,          # 'A' mañana, 'T' tarde, None desconocido
                 "hora_confirmada": False,  # la RFAF aún no publica horas
@@ -163,14 +163,14 @@ def plegar(linea: str) -> list[str]:
     return trozos
 
 
-def genera_ics(partidos: list[dict]) -> str:
+def genera_ics(partidos: list[dict], equipo: str, slug: str) -> str:
     lineas = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
         "PRODID:-//calendario-rfaf-personal//ES",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
-        f"X-WR-CALNAME:{esc(EQUIPO)}",
+        f"X-WR-CALNAME:{esc(equipo)}",
         "X-WR-TIMEZONE:Europe/Madrid",
         "REFRESH-INTERVAL;VALUE=DURATION:PT12H",
         "X-PUBLISHED-TTL:PT12H",
@@ -191,7 +191,7 @@ def genera_ics(partidos: list[dict]) -> str:
         evento = [
             "BEGIN:VEVENT",
             # UID estable por jornada -> actualiza en vez de duplicar
-            f"UID:rfaf-48795840-j{p['jornada']:02d}@calendario-personal",
+            f"UID:rfaf-{slug}-j{p['jornada']:02d}@calendario-personal",
             f"DTSTAMP:{sello}",
             f"DTSTART;TZID=Europe/Madrid:{inicio.strftime(fmt)}",
             f"DTEND;TZID=Europe/Madrid:{fin.strftime(fmt)}",
@@ -216,19 +216,27 @@ def genera_ics(partidos: list[dict]) -> str:
 # --- Main --------------------------------------------------------------------
 
 def main():
-    if len(sys.argv) > 1:
-        html = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
-    else:
-        html = descargar()
+    parser = ArgumentParser(description="Genera un calendario ICS desde la RFAF")
+    parser.add_argument("html", nargs="?", help="HTML local en lugar de descargarlo")
+    parser.add_argument("--url", default=URL_POR_DEFECTO, help="URL del calendario RFAF")
+    parser.add_argument("--equipo", default=EQUIPO_POR_DEFECTO, help="Nombre exacto del equipo")
+    parser.add_argument("--slug", default=SLUG_POR_DEFECTO, help="Identificador para los ficheros y UID")
+    args = parser.parse_args()
 
-    partidos = parsea(html)
+    if args.html:
+        html = Path(args.html).read_text(encoding="utf-8", errors="replace")
+    else:
+        html = descargar(args.url)
+
+    partidos = parsea(html, args.equipo)
     if not partidos:
-        print(f"⚠️  No se encontró ningún partido de {EQUIPO}. "
+        print(f"⚠️  No se encontró ningún partido de {args.equipo}. "
               "¿Ha cambiado el nombre o el HTML?", file=sys.stderr)
         return 1
 
-    (OUT / "marianistas.ics").write_text(genera_ics(partidos), encoding="utf-8")
-    (OUT / "marianistas.json").write_text(
+    (OUT / f"{args.slug}.ics").write_text(
+        genera_ics(partidos, args.equipo, args.slug), encoding="utf-8")
+    (OUT / f"{args.slug}.json").write_text(
         json.dumps(partidos, ensure_ascii=False, indent=2), encoding="utf-8")
 
     casa = sum(p["en_casa"] for p in partidos)
